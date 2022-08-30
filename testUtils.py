@@ -10,10 +10,10 @@ from typing import (
 def run_formatter():
     os.system('black -l 500 ' + os.getenv("SOURCE_DIR"))
 
-def run_command(cmd, arguments=[]):
+def run_command(cmd, arguments=[], timeout=None):
     """
         Open process to execute command and pipe in arguments through stdin.
-        Raise RuntimeError if stderr has content, else return stdout.
+        Return (stdout, stderr, return_code).
     """
     # Start the process
     proc = subprocess.Popen(cmd,
@@ -24,19 +24,15 @@ def run_command(cmd, arguments=[]):
         proc.stdin.write(argument.encode('ascii') + b"\n")
         proc.stdin.flush()
 
-    proc.wait()
+    proc.wait(timeout)
 
     stderr = proc.stderr.read().decode('utf8')
-    result = proc.stdout.read().decode('utf8')
+    stdout = proc.stdout.read().decode('utf8')
     proc.stdin.close()
     proc.stdout.close()
     proc.stderr.close()
-    # Give output - either an error or the terminal stdout
-    if len(stderr) > 0:
-        raise RuntimeError(
-            f"Program encountered an error during runtime exit code [ {str(proc.returncode)} ] stdout [ {result.decode('utf8')} ] stderr [ {stderr.decode('utf8')} ]"
-        )
-    return result.lower()
+    
+    return stdout, stderr, proc.returncode
 
 def run_student_file(file_name: str, arguments: Optional[List[str]] = [],
                      seed: Optional[Union[int, None]] = None,
@@ -60,7 +56,13 @@ def run_student_file(file_name: str, arguments: Optional[List[str]] = [],
     else:
         cmd += f"{os.getenv('SOURCE_DIR')}{file_name}"
 
-    return run_command(cmd, arguments)
+    stdout, stderr, returncode = run_command(cmd, arguments)
+    # Give output - either an error or the terminal stdout
+    if len(stderr) > 0:
+        raise RuntimeError(
+            f"Program encountered an error during runtime exit code [ {str(returncode)} ] stdout [ {stdout} ] stderr [ {stderr} ]"
+        )
+    return stdout.lower()
 
 def lint_jupyter_notebook(file_name):
     """
@@ -85,9 +87,15 @@ def lint_jupyter_notebook(file_name):
             notebook = load_notebook(nested_format=False)
             code_cells = [cell["source"] for cell in notebook["cells"] if cell["cell_type"] == "code"]
             code = "\n".join(["".join(cell) for cell in code_cells])
+            cmd = f"python3 -c '{code}'"
 
-            # Raise SyntaxError for invalid code
-            compile(code, file_name, "exec")
+            # Timeout in three seconds
+            stdout, stderr, _ = run_command(cmd, timeout=3)
+
+            # Give output - either an error or the terminal stdout
+            if len(stderr) > 0:
+                raise RuntimeError(
+                    f"There are still errors in the notebook:\n {stderr}")
 
         # @message: Deze test controleert of je Jupyter Notebook correct
         # is geformatteerd.

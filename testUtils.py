@@ -119,10 +119,10 @@ def lint_jupyter_notebook(file_name):
                 e.args = ("The Jupyter Notebook doesn't start with a title. Make sure you put a h1-header at the top.",)
                 raise e
 
-        # @message: Elk netjes Jupyter Notebook begint met een titel
-        # en een beschrijving in Markdown.
-        # Deze test controleert of je Jupyter begint met een titel
-        # en een beschrijving aan het begin van je bestand.
+        # @message: Elk netjes Jupyter Notebook heeft een korte beschrijving 
+        # na een header.
+        # Deze test controleert of elke header wordt gevolgd door een korte
+        # volzin als beschrijving.
         def heeft_beschrijving(self):
             def evaluate_markdown_blocks(md_cells):
                 text = "\n\n".join(md_cells)
@@ -130,8 +130,8 @@ def lint_jupyter_notebook(file_name):
                     if description == "":
                         e = f"Header `{header}` has no description."
                         raise AssertionError(e)
-                    if re.findall(r"[.:,;!?]", description) == []:
-                        e = f"Header `{header}` is supposed to have at least one sentence as a description. Instead its description is `{description[:10] + '...' if len(description) > 10 else description}`. Make sure your sentence is spelled correctly and uses punctuation."
+                    if re.findall(r"[.:,;!?]", description) == [] and len(description.split(" ")) < 6:
+                        e = f"Header `{header}` is supposed to have a short sentence as a description. Instead its description is `{description[:10] + '...' if len(description) > 10 else description}`. Make sure your sentence is spelled correctly and uses punctuation."
                         raise AssertionError(e)
 
             # In case the title is in a different Markdown cell than

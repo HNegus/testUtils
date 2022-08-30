@@ -81,21 +81,40 @@ def lint_jupyter_notebook(file_name):
                                    else "".join(cell['source'])
                                    )
 
-        # @message: Deze test controleert of je elke cel in je Jupyter
-        # Notebook probleemloos kan worden uitgevoerd.
+        def compile_flake8_messages(script_content, stdout):
+            """
+                Helper function to format the output of flake 8 a bit nicer.
+            """
+            errors = re.findall(".*\.py:(\d+):(\d+): \w\d+ (.*)", stdout)
+            errors = [(int(line_no), int(column_no) - 1, error) for (line_no, column_no, error) in errors]
+            lines = script_content.split("\n")
+            message = [
+f"""{error}:
+    {lines[line_no - 1]}
+    {' ' * column_no}^
+""" for (line_no, column_no, error) in errors]
+
+            return "".join(message)
+
+        # @message: Deze test controleert de code cellen in je Jupyter
+        # Notebook logische fouten of stijlfouten bevatten.
         def kan_worden_uitgevoerd(self):
             notebook = load_notebook(nested_format=False)
             code_cells = [cell["source"] for cell in notebook["cells"] if cell["cell_type"] == "code"]
             code = "\n".join(["".join(cell) for cell in code_cells])
-            cmd = f"python3 -c '{code}'"
+            
+            code_filename = f"_{hash(code)}.py"
+            with open(code_filename, "w") as f:
+                f.write(code)
+            
+            cmd = f"python3 -m flake8 --ignore=W292,E302,E305,E402,E501 {code_filename}"
 
-            # Timeout in three seconds
-            stdout, stderr, _ = run_command(cmd, timeout=3)
-
-            # Give output - either an error or the terminal stdout
-            if len(stderr) > 0:
-                raise RuntimeError(
-                    f"There are still errors in the notebook:\n {stderr}")
+            # Timeout in 10 seconds
+            stdout, _, _ = run_command(cmd, timeout=3)
+            os.remove(code_filename)
+            if len(stdout) > 0:
+                message = compile_flake8_messages(code, stdout)
+                raise RuntimeError(f"There are still errors in the notebook:\n {message}")
 
         # @message: Deze test controleert of je Jupyter Notebook correct
         # is geformatteerd.

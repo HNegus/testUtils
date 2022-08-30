@@ -10,6 +10,34 @@ from typing import (
 def run_formatter():
     os.system('black -l 500 ' + os.getenv("SOURCE_DIR"))
 
+def run_command(cmd, arguments=[]):
+    """
+        Open process to execute command and pipe in arguments through stdin.
+        Raise RuntimeError if stderr has content, else return stdout.
+    """
+    # Start the process
+    proc = subprocess.Popen(cmd,
+                            shell=True, stdout=subprocess.PIPE,
+                            stdin=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    for argument in arguments:
+        proc.stdin.write(argument.encode('ascii') + b"\n")
+        proc.stdin.flush()
+
+    proc.wait()
+
+    stderr = proc.stderr.read().decode('utf8')
+    result = proc.stdout.read().decode('utf8')
+    proc.stdin.close()
+    proc.stdout.close()
+    proc.stderr.close()
+    # Give output - either an error or the terminal stdout
+    if len(stderr) > 0:
+        raise RuntimeError(
+            f"Program encountered an error during runtime exit code [ {str(proc.returncode)} ] stdout [ {result.decode('utf8')} ] stderr [ {stderr.decode('utf8')} ]"
+        )
+    return result.lower()
+
 def run_student_file(file_name: str, arguments: Optional[List[str]] = [],
                      seed: Optional[Union[int, None]] = None,
                      open_files: Optional[bool] = False) -> str:
@@ -18,7 +46,7 @@ def run_student_file(file_name: str, arguments: Optional[List[str]] = [],
         The function returns a string representation of
         the stdout values from the subprocess.
     """
-    cmd = 'python '
+    cmd = 'python3 '
 
     if seed is not None or open_files:
         cmd += f"-c \"fopen=open;"
@@ -32,24 +60,7 @@ def run_student_file(file_name: str, arguments: Optional[List[str]] = [],
     else:
         cmd += f"{os.getenv('SOURCE_DIR')}{file_name}"
 
-    # Start the process
-    proc = subprocess.Popen(cmd,
-                            shell=True, stdout=subprocess.PIPE,
-                            stdin=subprocess.PIPE, stderr=subprocess.PIPE)
-
-    for argument in arguments:
-        proc.stdin.write(argument.encode('ascii') + b"\n")
-        proc.stdin.flush()
-
-    proc.wait()
-
-    stderr = proc.stderr.read()
-    # Give output - either an error or the terminal stdout
-    if len(stderr) > 0:
-        raise RuntimeError(
-            "Program encountered an error during runtime exit code [" + str(proc.returncode) + "] stdout [" + str(proc.stdout.read()) + "] stderr [" + str(stderr) + "]"
-        )
-    return str(proc.stdout.read()).lower()
+    return run_command(cmd, arguments)
 
 def lint_jupyter_notebook(file_name):
     """

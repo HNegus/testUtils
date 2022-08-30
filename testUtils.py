@@ -219,9 +219,6 @@ def lint_jupyter_notebook(file_name):
                 if correct_import is None:
                     e = f"Module `{module}` is imported but isn't being used anywhere."
                     raise AssertionError(e)
-                if module not in correct_import[-1]['has_imports']:
-                    e = f"Expected module `{module}` to be imported at header `{correct_import[-1]['title']}`."
-                    raise AssertionError(e)
 
         # Register jupyter notebook tests
         func_name = "".join([word.capitalize() for word in file_name.split('.')])
@@ -233,7 +230,7 @@ def lint_jupyter_notebook(file_name):
         set_test(opgedeeld_in_headers, f'test_jupyterNotebook{func_name}IsOpgedeeldInStukkenMetHeaders')
         set_test(geen_blokken_naast_elkaar, f'test_jupyterNotebook{func_name}HeeftNooitTweeCodeBlokkenNaastElkaar')
         set_test(imports_op_juiste_plek,
-                 f'test_jupyterNotebook{func_name}ImporteertModulesEnVariabelenInHetJuisteCodeblok')
+                 f'test_jupyterNotebook{func_name}GeimporteerdeModulesWordenGebruikt')
 
         return test_object
 

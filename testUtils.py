@@ -79,6 +79,16 @@ def lint_jupyter_notebook(file_name):
                                    else "".join(cell['source'])
                                    )
 
+        # @message: Deze test controleert of je elke cel in je Jupyter
+        # Notebook probleemloos kan worden uitgevoerd.
+        def kan_worden_uitgevoerd(self):
+            notebook = load_notebook(nested_format=False)
+            code_cells = [cell["source"] for cell in notebook["cells"] if cell["cell_type"] == "code"]
+            code = "\n".join(["".join(cell) for cell in code_cells])
+
+            # Raise SyntaxError for invalid code
+            compile(code, file_name, "exec")
+
         # @message: Deze test controleert of je Jupyter Notebook correct
         # is geformatteerd.
         # Jupyter zou dit standaard moeten regelen, dus controleer of je
@@ -231,6 +241,9 @@ def lint_jupyter_notebook(file_name):
         set_test(geen_blokken_naast_elkaar, f'test_jupyterNotebook{func_name}HeeftNooitTweeCodeBlokkenNaastElkaar')
         set_test(imports_op_juiste_plek,
                  f'test_jupyterNotebook{func_name}GeimporteerdeModulesWordenGebruikt')
+        set_test(kan_worden_uitgevoerd,
+
+                 f'test_jupyterNotebook{func_name}KanWordenUitgevoerd')
 
         return test_object
 

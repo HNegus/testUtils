@@ -107,7 +107,7 @@ f"""{error}:
             with open(code_filename, "w") as f:
                 f.write(code)
             
-            cmd = f"python3 -m flake8 --ignore=W292,E302,E305,E402,E501 {code_filename}"
+            cmd = f"python3 -m flake8 --extend-ignore=E261,E301,E302,E303,E304,E305,E306,E402,E501,W291,W292,W391,F403,F405,F841 {code_filename}"
 
             # Timeout in 10 seconds
             stdout, _, _ = run_command(cmd, timeout=3)

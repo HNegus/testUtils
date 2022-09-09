@@ -244,19 +244,6 @@ f"""{error}:
                     e = f"Two code blocks found next to each other. The first one starts with `{first_line}` and the second one starts with `{second_line}`."
                     raise AssertionError(e)
 
-        def imports_op_juiste_plek(self):
-            notebook = load_notebook()
-            notebook, modules = open_notebook(notebook)
-            browse_for_used_imports(notebook, modules)
-
-            notebook = nest_document(notebook)
-
-            for module in modules:
-                correct_import = determine_longest_path(notebook, module)
-                if correct_import is None:
-                    e = f"Module `{module}` is imported but isn't being used anywhere."
-                    raise AssertionError(e)
-
         # Register jupyter notebook tests
         func_name = "".join([word.capitalize() for word in file_name.split('.')])
         set_test = lambda func, name: setattr(test_object, name, func)
@@ -266,11 +253,7 @@ f"""{error}:
         set_test(heeft_beschrijving, f'test_jupyterNotebook{func_name}HeeftEenBeschrijving')
         set_test(opgedeeld_in_headers, f'test_jupyterNotebook{func_name}IsOpgedeeldInStukkenMetHeaders')
         set_test(geen_blokken_naast_elkaar, f'test_jupyterNotebook{func_name}HeeftNooitTweeCodeBlokkenNaastElkaar')
-        set_test(imports_op_juiste_plek,
-                 f'test_jupyterNotebook{func_name}GeimporteerdeModulesWordenGebruikt')
-        set_test(kan_worden_uitgevoerd,
-
-                 f'test_jupyterNotebook{func_name}KanWordenUitgevoerd')
+        set_test(kan_worden_uitgevoerd, f'test_jupyterNotebook{func_name}KanWordenUitgevoerd')
 
         return test_object
 

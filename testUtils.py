@@ -7,6 +7,10 @@ from typing import (
     Any, Dict, Generator, List, Optional, Tuple, Union,
 )
 
+# BEGIN LINES ADDED FOR TESTING PURPOSES
+os.environ['SOURCE_DIR'] = './'
+# END
+
 def run_formatter():
     os.system('black -l 500 ' + os.getenv("SOURCE_DIR"))
 
@@ -31,7 +35,7 @@ def run_command(cmd, arguments=[], timeout=None):
     proc.stdin.close()
     proc.stdout.close()
     proc.stderr.close()
-    
+
     return stdout, stderr, proc.returncode
 
 def run_student_file(file_name: str, arguments: Optional[List[str]] = [],
@@ -89,10 +93,10 @@ def lint_jupyter_notebook(file_name):
             errors = [(int(line_no), int(column_no) - 1, error) for (line_no, column_no, error) in errors]
             lines = script_content.split("\n")
             message = [
-f"""{error}:
-    {lines[line_no - 1]}
-    {' ' * column_no}^
-""" for (line_no, column_no, error) in errors]
+                f"""{error}:
+                    {lines[line_no - 1]}
+                    {' ' * column_no}^
+                """ for (line_no, column_no, error) in errors]
 
             return "".join(message)
 
@@ -102,15 +106,16 @@ f"""{error}:
             notebook = load_notebook(nested_format=False)
             code_cells = [cell["source"] for cell in notebook["cells"] if cell["cell_type"] == "code"]
             code = "\n".join(["".join(cell) for cell in code_cells])
-            
+
             code_filename = f"_{hash(code)}.py"
             with open(code_filename, "w") as f:
                 f.write(code)
-            
+
             cmd = f"python3 -m flake8 --extend-ignore=E261,E301,E302,E303,E304,E305,E306,E402,E501,W291,W292,W391,F403,F405,F841 {code_filename}"
 
             # Timeout in 10 seconds
             stdout, _, _ = run_command(cmd, timeout=3)
+
             os.remove(code_filename)
             if len(stdout) > 0:
                 message = compile_flake8_messages(code, stdout)
@@ -156,7 +161,7 @@ f"""{error}:
                 e.args = ("The Jupyter Notebook doesn't start with a title. Make sure you put a h1-header at the top.",)
                 raise e
 
-        # @message: Elk netjes Jupyter Notebook heeft een korte beschrijving 
+        # @message: Elk netjes Jupyter Notebook heeft een korte beschrijving
         # na een header.
         # Deze test controleert of elke header wordt gevolgd door een korte
         # volzin als beschrijving.
@@ -247,6 +252,12 @@ f"""{error}:
         # Register jupyter notebook tests
         func_name = "".join([word.capitalize() for word in file_name.split('.')])
         set_test = lambda func, name: setattr(test_object, name, func)
+
+        # Check if flake8 is working on the server
+        _, stderr, returncode = run_command("python -c \"import flake8\"")
+
+        if returncode != 0:
+            raise ModuleNotFoundError(stderr)
 
         set_test(correct_formaat, f'test_jupyterNotebook{func_name}HeeftCorrectFormaat')
         set_test(begint_met_titel, f'test_jupyterNotebook{func_name}BegintMetEenTitel')

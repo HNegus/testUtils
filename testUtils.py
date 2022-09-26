@@ -7,10 +7,6 @@ from typing import (
     Any, Dict, Generator, List, Optional, Tuple, Union,
 )
 
-# BEGIN LINES ADDED FOR TESTING PURPOSES
-os.environ['SOURCE_DIR'] = './'
-# END
-
 def run_formatter():
     os.system('black -l 500 ' + os.getenv("SOURCE_DIR"))
 

@@ -87,12 +87,13 @@ def lint_jupyter_notebook(file_name):
             """
             errors = re.findall(f"{file_name}:(\d+):(\d+): \w\d+ (.*)", stdout)
             errors = [(int(line_no), int(column_no) - 1, error) for (line_no, column_no, error) in errors]
+            print(errors)
             lines = script_content.split("\n")
             message = [
-                f"""{error}:
-                    {lines[line_no - 1]}
-                    {' ' * column_no}^
-                """ for (line_no, column_no, error) in errors]
+f"""{error}
+    {lines[line_no - 1]}
+    {' ' * column_no}^
+""" for (line_no, column_no, error) in errors]
 
             return "".join(message)
 
@@ -107,10 +108,9 @@ def lint_jupyter_notebook(file_name):
 
             # Timeout in 3 seconds
             stdout, _, _ = run_command(cmd, timeout=3)
-            print(code)
             if len(stdout) > 0:
                 message = compile_flake8_messages(code, stdout)
-                raise RuntimeError(f"There are still errors in the notebook:\n {message}")
+                raise RuntimeError(f"There are still errors in the notebook:\n{message}")
 
         # @message: Deze test controleert of je Jupyter Notebook correct
         # is geformatteerd.

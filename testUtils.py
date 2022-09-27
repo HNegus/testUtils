@@ -87,7 +87,6 @@ def lint_jupyter_notebook(file_name):
             """
             errors = re.findall(f"{file_name}:(\d+):(\d+): \w\d+ (.*)", stdout)
             errors = [(int(line_no), int(column_no) - 1, error) for (line_no, column_no, error) in errors]
-            print(errors)
             lines = script_content.split("\n")
             message = [
 f"""{error}

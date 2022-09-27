@@ -85,7 +85,7 @@ def lint_jupyter_notebook(file_name):
             """
                 Helper function to format the output of flake 8 a bit nicer.
             """
-            errors = re.findall(".*\.py:(\d+):(\d+): \w\d+ (.*)", stdout)
+            errors = re.findall(f"{file_name}:(\d+):(\d+): \w\d+ (.*)", stdout)
             errors = [(int(line_no), int(column_no) - 1, error) for (line_no, column_no, error) in errors]
             lines = script_content.split("\n")
             message = [
@@ -103,16 +103,11 @@ def lint_jupyter_notebook(file_name):
             code_cells = [cell["source"] for cell in notebook["cells"] if cell["cell_type"] == "code"]
             code = "\n".join(["".join(cell) for cell in code_cells])
 
-            code_filename = f"_{hash(code)}.py"
-            with open(code_filename, "w") as f:
-                f.write(code)
+            cmd = f"echo '{code}' | python3 -m flake8 --show-source --extend-ignore=E261,E301,E302,E303,E304,E305,E306,E402,E501,W291,W292,W391,F403,F405,F841 --stdin-display-name={file_name} -"
 
-            cmd = f"python3 -m flake8 --extend-ignore=E261,E301,E302,E303,E304,E305,E306,E402,E501,W291,W292,W391,F403,F405,F841 {code_filename}"
-
-            # Timeout in 10 seconds
+            # Timeout in 3 seconds
             stdout, _, _ = run_command(cmd, timeout=3)
-
-            os.remove(code_filename)
+            print(code)
             if len(stdout) > 0:
                 message = compile_flake8_messages(code, stdout)
                 raise RuntimeError(f"There are still errors in the notebook:\n {message}")
@@ -250,7 +245,7 @@ def lint_jupyter_notebook(file_name):
         set_test = lambda func, name: setattr(test_object, name, func)
 
         # Check if flake8 is working on the server
-        _, stderr, returncode = run_command("python -c \"import flake8\"")
+        _, stderr, returncode = run_command("python3 -c \"import flake8\"")
 
         if returncode != 0:
             raise ModuleNotFoundError(stderr)

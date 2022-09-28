@@ -2,6 +2,7 @@ import os
 import re
 import json
 import unittest
+import shlex
 import subprocess
 from typing import (
     Any, Dict, Generator, List, Optional, Tuple, Union,
@@ -102,8 +103,9 @@ f"""{error}
             notebook = load_notebook(nested_format=False)
             code_cells = [cell["source"] for cell in notebook["cells"] if cell["cell_type"] == "code"]
             code = "\n".join(["".join(cell) for cell in code_cells])
+            code = shlex.quote(code)
 
-            cmd = f"echo '{code}' | python3 -m flake8 --show-source --extend-ignore=E261,E301,E302,E303,E304,E305,E306,E402,E501,W291,W292,W391,F403,F405,F841 --stdin-display-name={file_name} -"
+            cmd = f"echo {code} | python3 -m flake8 --show-source --extend-ignore=E261,E301,E302,E303,E304,E305,E306,E402,E501,W291,W292,W391,F403,F405,F841 --stdin-display-name={file_name} -"
 
             # Timeout in 3 seconds
             stdout, _, _ = run_command(cmd, timeout=3)

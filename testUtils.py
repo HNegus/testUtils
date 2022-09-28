@@ -24,11 +24,11 @@ def run_command(cmd, arguments=[], timeout=None):
         proc.stdin.write(argument.encode('ascii') + b"\n")
         proc.stdin.flush()
 
+    proc.stdin.close()
     proc.wait(timeout)
 
     stderr = proc.stderr.read().decode('utf8')
     stdout = proc.stdout.read().decode('utf8')
-    proc.stdin.close()
     proc.stdout.close()
     proc.stderr.close()
 
@@ -103,10 +103,10 @@ f"""{error}
             code_cells = [cell["source"] for cell in notebook["cells"] if cell["cell_type"] == "code"]
             code = "\n".join(["".join(cell) for cell in code_cells])
 
-            cmd = f"echo '{code}' | python3 -m flake8 --show-source --extend-ignore=E261,E301,E302,E303,E304,E305,E306,E402,E501,W291,W292,W391,F403,F405,F841 --stdin-display-name={file_name} -"
+            cmd = f"flake8 --show-source --extend-ignore=E261,E301,E302,E303,E304,E305,E306,E402,E501,W291,W292,W391,F403,F405,F841 --stdin-display-name={file_name} -"
 
             # Timeout in 3 seconds
-            stdout, _, _ = run_command(cmd, timeout=3)
+            stdout, _, _ = run_command(cmd, arguments=[code], timeout=3)
             if len(stdout) > 0:
                 message = compile_flake8_messages(code, stdout)
                 raise RuntimeError(f"There are still errors in the notebook:\n{message}")
